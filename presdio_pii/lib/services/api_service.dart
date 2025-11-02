@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import '../models/chat_message.dart';
 import '../models/chat_session.dart';
 import 'local_storage_service.dart';
+import 'pii_service.dart';
 import '../constants/app_strings.dart';
 
 class ApiService {
@@ -172,7 +173,7 @@ class ApiService {
     }
     
     print('[DEBUG] Using local processing for: $text');
-    final message = _createLocalMessage(text);
+    final message = await _createLocalMessage(text);
     await LocalStorageService.saveMessage(sessionId, message);
     return message;
   }
@@ -208,19 +209,25 @@ class ApiService {
     return session;
   }
 
-  static ChatMessage _createLocalMessage(String text) {
-    final anonymized = _anonymizeText(text);
-    return ChatMessage(
-      id: _generateId(),
-      userMessage: text,
-      anonymizedText: anonymized,
-      llmPrompt: anonymized,
-      botResponse: _generateBotResponse(text),
-      reconstructedText: text,
-      privacyScore: _calculatePrivacyScore(text),
-      processingTime: 1.5,
-      timestamp: DateTime.now(),
-    );
+  static Future<ChatMessage> _createLocalMessage(String text) async {
+    // Use PII service for proper LLM processing
+    try {
+      return await PIIService.processLocally(text);
+    } catch (e) {
+      // Fallback only if PII service fails
+      final anonymized = _anonymizeText(text);
+      return ChatMessage(
+        id: _generateId(),
+        userMessage: text,
+        anonymizedText: anonymized,
+        llmPrompt: anonymized,
+        botResponse: "Error: Could not process message properly. Please try again.",
+        reconstructedText: text,
+        privacyScore: _calculatePrivacyScore(text),
+        processingTime: 1.5,
+        timestamp: DateTime.now(),
+      );
+    }
   }
 
   static String _generateId() {
@@ -248,28 +255,8 @@ class ApiService {
   }
 
   static String _generateBotResponse(String text) {
-    final lower = text.toLowerCase();
-    
-    // Greeting responses
-    if (lower.contains('myself') || lower.contains('my name is') || lower.contains('i am')) {
-      return "Nice to meet you! Your personal information has been protected. How can I help you today?";
-    }
-    
-    // Math operations
-    if (lower.contains('add') || lower.contains('sum') || lower.contains('calculate')) {
-      final numbers = RegExp(r'\d+').allMatches(text).map((m) => m.group(0)!).toList();
-      if (numbers.isNotEmpty) {
-        int sum = 0;
-        for (var num in numbers) {
-          for (var digit in num.split('')) {
-            sum += int.parse(digit);
-          }
-        }
-        return "The sum of all digits is: $sum";
-      }
-    }
-    
-    return "I understand your message. Your privacy has been protected. How can I assist you further?";
+    // This should not be called - use PIIService instead
+    return "Error: Using wrong service. Please use PIIService for proper LLM responses.";
   }
 
   static double _calculatePrivacyScore(String text) {
