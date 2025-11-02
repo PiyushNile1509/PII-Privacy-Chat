@@ -11,7 +11,6 @@ class ApiService {
   static String _workingBaseUrl = '';
   
   static final List<String> _baseUrls = [
-    'https://pii-privacy-chat.onrender.com/api',
     'https://pii-backend-deploy.onrender.com/api',
     'http://127.0.0.1:5000/api',
   ];
