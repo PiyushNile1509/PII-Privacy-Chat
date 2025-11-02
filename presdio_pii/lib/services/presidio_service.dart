@@ -7,19 +7,13 @@ class PresidioService {
   static const String analyzerBaseUrl = 'http://localhost:3000';
   static const String anonymizerBaseUrl = 'http://localhost:3001';
   
-  // Fallback URLs for different environments
+  // Use only Render backend URLs
   static const List<String> analyzerUrls = [
-    'http://10.230.149.111:3000', // Your computer's IP
-    'http://10.0.2.2:3000', // Android emulator
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
+    'https://presidio-analyzer.onrender.com',
   ];
   
   static const List<String> anonymizerUrls = [
-    'http://10.230.149.111:3001', // Your computer's IP
-    'http://10.0.2.2:3001', // Android emulator
-    'http://localhost:3001',
-    'http://127.0.0.1:3001',
+    'https://presidio-anonymizer.onrender.com',
   ];
 
   static String? _workingAnalyzerUrl;
