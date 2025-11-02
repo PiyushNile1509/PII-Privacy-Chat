@@ -11,10 +11,9 @@ class ApiService {
   static String _workingBaseUrl = '';
   
   static final List<String> _baseUrls = [
-    'http://10.216.184.140:5000/api',  // Your computer's IP
-    'http://10.0.2.2:5000/api',
-    'http://127.0.0.1:5000/api',
+    'https://pii-privacy-chat.onrender.com/api',
     'https://pii-backend-deploy.onrender.com/api',
+    'http://127.0.0.1:5000/api',
   ];
 
   static Future<bool> checkBackendHealth() async {
