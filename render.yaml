@@ -2,8 +2,11 @@ services:
   - type: web
     name: pii-privacy-chat
     env: static
-    buildCommand: cd presdio_pii && flutter build web --release
+    buildCommand: cd presdio_pii && flutter build web --release --dart-define=GEMINI_API_KEY=$GEMINI_API_KEY
     staticPublishPath: presdio_pii/build/web
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false
     buildFilter:
       paths:
       - presdio_pii/**

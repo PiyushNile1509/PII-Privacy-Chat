@@ -3,7 +3,7 @@ import 'dart:math';
 import 'package:http/http.dart' as http;
 
 class LLMService {
-  static const String geminiApiKey = 'AIzaSyDtNUvXpp63Sjl2GHEmaLtw831zEe8Cuz8'; // Replace with actual API key
+  static const String geminiApiKey = String.fromEnvironment('GEMINI_API_KEY', defaultValue: '');
   static const String geminiBaseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
   
   /// Generate fake data for detected PII entities
@@ -71,7 +71,7 @@ class LLMService {
   
   /// Send text to LLM and get response
   static Future<String> getLLMResponse(String text) async {
-    if (geminiApiKey == 'YOUR_GEMINI_API_KEY') {
+    if (geminiApiKey.isEmpty) {
       // Fallback response when no API key is configured
       return _generateFallbackResponse(text);
     }
