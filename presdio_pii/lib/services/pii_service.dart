@@ -180,8 +180,9 @@ class PIIService {
     // Call Gemini API for actual LLM response
     try {
       const apiKey = 'AIzaSyDtNUvXpp63Sjl2GHEmaLtw831zEe8Cuz8';
+      print('[DEBUG] Calling Gemini 2.0 Flash with text: $anonymizedText');
       final response = await http.post(
-        Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=$apiKey'),
+        Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$apiKey'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'contents': [{
@@ -190,6 +191,9 @@ class PIIService {
         }),
       ).timeout(Duration(seconds: 15));
       
+      print('[DEBUG] Gemini API response: ${response.statusCode}');
+      print('[DEBUG] Gemini API body: ${response.body}');
+      
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final candidates = data['candidates'] as List?;
@@ -197,10 +201,15 @@ class PIIService {
           final content = candidates[0]['content'];
           final parts = content['parts'] as List?;
           if (parts != null && parts.isNotEmpty) {
-            return parts[0]['text'] ?? _getLocalFallbackResponse(anonymizedText);
+            final result = parts[0]['text'] as String?;
+            if (result != null && result.isNotEmpty) {
+              print('[SUCCESS] Got Gemini response: $result');
+              return result;
+            }
           }
         }
       }
+      print('[ERROR] Gemini API failed or returned empty response');
     } catch (e) {
       print('[ERROR] Gemini API failed: $e');
     }
