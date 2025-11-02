@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: pii-privacy-chat
+    env: static
+    buildCommand: cd presdio_pii && flutter build web --release
+    staticPublishPath: presdio_pii/build/web
+    buildFilter:
+      paths:
+      - presdio_pii/**

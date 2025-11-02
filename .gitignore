@@ -1,0 +1,20 @@
+# Flutter/Dart
+presdio_pii/.dart_tool/
+presdio_pii/build/
+presdio_pii/.packages
+presdio_pii/pubspec.lock
+
+# Environment
+.env
+*.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
