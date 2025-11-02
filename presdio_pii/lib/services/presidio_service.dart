@@ -21,10 +21,12 @@ class PresidioService {
 
   /// Check health of Presidio services
   static Future<Map<String, bool>> checkHealth() async {
+    print('[DEBUG] === PRESIDIO HEALTH CHECK STARTED ===');
     bool analyzerHealthy = false;
     bool anonymizerHealthy = false;
 
     // Check analyzer health
+    print('[DEBUG] Checking Presidio Analyzer health...');
     for (String url in analyzerUrls) {
       try {
         print('[DEBUG] Trying analyzer: $url');
@@ -33,6 +35,7 @@ class PresidioService {
           headers: {'Content-Type': 'application/json'},
         ).timeout(Duration(seconds: 3));
         
+        print('[DEBUG] Analyzer response: ${response.statusCode}');
         if (response.statusCode == 200) {
           _workingAnalyzerUrl = url;
           analyzerHealthy = true;
@@ -46,6 +49,7 @@ class PresidioService {
     }
 
     // Check anonymizer health
+    print('[DEBUG] Checking Presidio Anonymizer health...');
     for (String url in anonymizerUrls) {
       try {
         print('[DEBUG] Trying anonymizer: $url');
@@ -54,6 +58,7 @@ class PresidioService {
           headers: {'Content-Type': 'application/json'},
         ).timeout(Duration(seconds: 3));
         
+        print('[DEBUG] Anonymizer response: ${response.statusCode}');
         if (response.statusCode == 200) {
           _workingAnonymizerUrl = url;
           anonymizerHealthy = true;
@@ -65,6 +70,12 @@ class PresidioService {
         continue;
       }
     }
+
+    print('[DEBUG] === PRESIDIO HEALTH CHECK RESULTS ===');
+    print('[DEBUG] Analyzer healthy: $analyzerHealthy');
+    print('[DEBUG] Anonymizer healthy: $anonymizerHealthy');
+    print('[DEBUG] Working analyzer URL: $_workingAnalyzerUrl');
+    print('[DEBUG] Working anonymizer URL: $_workingAnonymizerUrl');
 
     return {
       'analyzer': analyzerHealthy,

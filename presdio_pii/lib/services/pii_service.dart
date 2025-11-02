@@ -120,11 +120,36 @@ class PIIService {
   }
   
   static Future<ChatMessage> processLocally(String text, [Map<String, dynamic>? analysis]) async {
-    analysis ??= PIIDependencyAnalyzer.analyzeQuery(text);
-    
     print('[DEBUG] ProcessLocally called for: $text');
+    print('[DEBUG] Attempting to use Presidio services...');
     
-    // Generate local response without backend dependency
+    // Try to use Presidio first, even locally
+    try {
+      final presidioResult = await PresidioService.processTextWithLLM(text);
+      print('[SUCCESS] Presidio processing successful!');
+      print('[DEBUG] Presidio anonymized: ${presidioResult['anonymized_text']}');
+      print('[DEBUG] Presidio LLM prompt: ${presidioResult['llm_prompt']}');
+      print('[DEBUG] Presidio LLM response: ${presidioResult['llm_response']}');
+      print('[DEBUG] Presidio reconstructed: ${presidioResult['reconstructed_response']}');
+      
+      return ChatMessage(
+        id: _generateId(),
+        userMessage: text,
+        anonymizedText: presidioResult['anonymized_text'],
+        llmPrompt: presidioResult['llm_prompt'],
+        botResponse: presidioResult['llm_response'],
+        reconstructedText: presidioResult['reconstructed_response'],
+        privacyScore: presidioResult['privacy_score'],
+        processingTime: presidioResult['processing_time'],
+        timestamp: DateTime.now(),
+      );
+    } catch (e) {
+      print('[ERROR] Presidio failed in processLocally: $e');
+      print('[DEBUG] Falling back to simple local processing');
+    }
+    
+    // Fallback to simple processing if Presidio fails
+    analysis ??= PIIDependencyAnalyzer.analyzeQuery(text);
     final anonymized = analysis['maskedQuery'] as String;
     final botResponse = await _generateBotResponse(anonymized);
     
