@@ -177,33 +177,49 @@ class PIIService {
   }
   
   static Future<String> _generateBotResponse(String anonymizedText) async {
-    // Simple response generation based on anonymized text
-    final lower = anonymizedText.toLowerCase();
-    
-    if (lower.contains('[person]') || lower.contains('myself') || lower.contains('my name')) {
-      return "Nice to meet you! Your personal information has been protected for privacy. How can I help you today?";
+    // Call Gemini API for actual LLM response
+    try {
+      const apiKey = 'AIzaSyDtNUvXpp63Sjl2GHEmaLtw831zEe8Cuz8';
+      final response = await http.post(
+        Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=$apiKey'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'contents': [{
+            'parts': [{'text': anonymizedText}]
+          }]
+        }),
+      ).timeout(Duration(seconds: 15));
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final candidates = data['candidates'] as List?;
+        if (candidates != null && candidates.isNotEmpty) {
+          final content = candidates[0]['content'];
+          final parts = content['parts'] as List?;
+          if (parts != null && parts.isNotEmpty) {
+            return parts[0]['text'] ?? _getLocalFallbackResponse(anonymizedText);
+          }
+        }
+      }
+    } catch (e) {
+      print('[ERROR] Gemini API failed: $e');
     }
     
-    if (lower.contains('[email]')) {
-      return "I see you mentioned an email address. Your email has been masked for privacy protection. How can I assist you?";
-    }
+    return _getLocalFallbackResponse(anonymizedText);
+  }
+  
+  static String _getLocalFallbackResponse(String text) {
+    final lower = text.toLowerCase();
     
-    if (lower.contains('[phone]')) {
-      return "I notice you shared a phone number. It has been anonymized for your security. What would you like to know?";
-    }
-    
-    if (lower.contains('[credit_card]') || lower.contains('[ssn]')) {
-      return "I've detected sensitive financial information that has been protected. Please be careful when sharing such details. How can I help?";
-    }
     
     if (lower.contains('calculate') || lower.contains('add') || lower.contains('sum')) {
-      final numbers = RegExp(r'\d+').allMatches(anonymizedText).map((m) => m.group(0)!).toList();
+      final numbers = RegExp(r'\d+').allMatches(text).map((m) => int.parse(m.group(0)!)).toList();
       if (numbers.isNotEmpty) {
-        int sum = numbers.map(int.parse).reduce((a, b) => a + b);
+        int sum = numbers.reduce((a, b) => a + b);
         return "The sum is: $sum";
       }
     }
     
-    return "I understand your message. Your privacy has been protected using Presidio. How can I assist you further?";
+    return "I understand your message. How can I assist you further?";
   }
 }
