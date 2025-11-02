@@ -12,7 +12,6 @@ class ApiService {
   
   static final List<String> _baseUrls = [
     'https://pii-backend-deploy.onrender.com/api',
-    'http://127.0.0.1:5000/api',
   ];
 
   static Future<bool> checkBackendHealth() async {
