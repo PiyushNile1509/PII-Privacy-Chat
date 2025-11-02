@@ -5,11 +5,8 @@ import 'pii_dependency_analyzer.dart';
 import 'presidio_service.dart';
 
 class PIIService {
-  static const String baseUrl = 'http://10.216.184.140:5000/api';
+  static const String baseUrl = 'https://pii-backend-deploy.onrender.com/api';
   static const List<String> fallbackUrls = [
-    'http://10.216.184.140:5000/api',  // Your computer's IP
-    'http://10.0.2.2:5000/api',
-    'http://127.0.0.1:5000/api',
     'https://pii-backend-deploy.onrender.com/api',
   ];
   
@@ -125,44 +122,23 @@ class PIIService {
   static Future<ChatMessage> processLocally(String text, [Map<String, dynamic>? analysis]) async {
     analysis ??= PIIDependencyAnalyzer.analyzeQuery(text);
     
-    final sessionId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
-    
     print('[DEBUG] ProcessLocally called for: $text');
     
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/sessions/$sessionId/messages'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'text': text,
-          'pii_analysis': analysis,
-        }),
-      ).timeout(Duration(seconds: 10));
-
-      print('[DEBUG] ProcessLocally backend status: ${response.statusCode}');
-      
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        print('[DEBUG] ProcessLocally got bot_response: ${data['bot_response']}');
-        
-        return ChatMessage(
-          id: data['id'],
-          userMessage: data['user_message'],
-          anonymizedText: data['anonymized_text'] ?? analysis['maskedQuery'],
-          llmPrompt: data['llm_prompt'] ?? analysis['maskedQuery'],
-          botResponse: data['bot_response'],
-          reconstructedText: data['reconstructed_text'],
-          privacyScore: (data['privacy_score'] as num?)?.toDouble() ?? analysis['privacyScore'],
-          processingTime: (data['processing_time'] as num).toDouble(),
-          timestamp: DateTime.parse(data['timestamp']),
-        );
-      }
-    } catch (e) {
-      print('[ERROR] ProcessLocally backend failed: $e');
-      throw Exception('Backend connection failed. Please ensure the backend server is running.');
-    }
+    // Generate local response without backend dependency
+    final anonymized = analysis['maskedQuery'] as String;
+    final botResponse = await _generateBotResponse(anonymized);
     
-    throw Exception('Backend connection failed. Please ensure the backend server is running.');
+    return ChatMessage(
+      id: _generateId(),
+      userMessage: text,
+      anonymizedText: anonymized,
+      llmPrompt: anonymized,
+      botResponse: botResponse,
+      reconstructedText: text,
+      privacyScore: analysis['privacyScore'],
+      processingTime: 1.0,
+      timestamp: DateTime.now(),
+    );
   }
   
   static Future<String> _generateLocalResponse(String originalText, Map<String, dynamic> analysis) async {
